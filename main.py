@@ -20,7 +20,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint, Callback, LearningRateM
 # from pytorch_lightning.utilities.distributed import rank_zero_only
 from pytorch_lightning.utilities.rank_zero import rank_zero_only
 from pytorch_lightning.utilities import rank_zero_info
-# from pytorch_lightning.plugins import DDPPlugin
+from pytorch_lightning.plugins import DDPPlugin
 from pytorch_lightning.strategies import DDPStrategy
 
 
@@ -360,7 +360,7 @@ class ImageLogger(Callback):
         self.batch_freq = batch_frequency
         self.max_images = max_images
         self.logger_log_images = {
-            pl.loggers.TestTubeLogger: self._testtube,
+            pl.loggers.TensorBoardLogger: self._tensorboard,
         }
         self.log_steps = [2 ** n for n in range(6, int(np.log2(self.batch_freq)) + 1)]
         if not increase_log_steps:
@@ -371,8 +371,8 @@ class ImageLogger(Callback):
         self.log_images_kwargs = log_images_kwargs if log_images_kwargs else {}
         self.log_first_step = log_first_step
 
-    @rank_zero_only
-    def _testtube(self, pl_module, images, batch_idx, split):
+    @pl.utilities.rank_zero_only
+    def _tensorboard(self, pl_module, images, batch_idx, split):
         for k in images:
             grid = torchvision.utils.make_grid(images[k])
             grid = (grid + 1.0) / 2.0  # -1,1 -> 0,1; c,h,w
